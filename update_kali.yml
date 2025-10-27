@@ -1,17 +1,17 @@
 ---
 - name: Update and upgrade all packages on Kali Linux hosts
   hosts:  KaliVM
-  become: **yes**
+  become: yes
   tasks:
     - name: Update apt package cache (apt update)
       ansible.builtin.apt:
-        update_cache: **yes**
-        cache_valid_time: **3600** # Update cache if older than 1 hour (3600 seconds)
+        update_cache: yes
+        cache_valid_time: 3600 # Update cache if older than 1 hour (3600 seconds)
 
     - name: Upgrade all packages (apt upgrade -y)
       ansible.builtin.apt:
-        name: **"*"**
-        state: **latest**
+        name: "*"
+        state: latest
       register: apt_result
 
     - name: Report if updates were applied
