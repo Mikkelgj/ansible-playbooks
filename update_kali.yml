@@ -1,6 +1,6 @@
 ---
 - name: Update and upgrade all packages on Kali Linux hosts
-  hosts:  KaliVM
+  hosts:  "*"
   become: yes
   tasks:
     - name: Update apt package cache (apt update)
