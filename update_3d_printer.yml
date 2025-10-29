@@ -21,17 +21,13 @@
 
     - name: Set fact for printer state
       ansible.builtin.set_fact:
-        # Check if the result variable is defined AND if the task was not skipped. 
-        # The 'defined' test handles cases where the variable might not exist (like during check mode skips).
+        # Use Jinja tests 'is success' and 'is skipped' for a more robust check on the task result.
+        # This prevents the 'dict object has no attribute skipped' error when the task fails but is ignored.
         printer_state: >
-          {% if printer_status_check is defined and not printer_status_check.skipped %}
-            {% if printer_status_check is failed or printer_status_check.status != 200 %}
-              unknown
-            {% else %}
-              {{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] | lower }}
-            {% endif %}
+          {% if printer_status_check is success and not printer_status_check.skipped and printer_status_check.status == 200 %}
+            {{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] | lower }}
           {% else %}
-            # If the task was skipped or the variable isn't defined (e.g., check mode), assume 'unknown'
+            # If the URI task failed, was skipped, or returned a non-200 status, assume 'unknown' (unsafe).
             unknown
           {% endif %}
 
