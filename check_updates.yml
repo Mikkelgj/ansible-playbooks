@@ -1,0 +1,37 @@
+---
+# Playbook: check_updates.yml
+# Description: Checks for available system and package updates on Debian/Ubuntu hosts.
+
+- name: Check for available updates on Debian-based systems
+  hosts: all
+  become: true # Required to run 'apt update'
+
+  tasks:
+    - name: Ensure APT cache is updated
+      # The apt module updates the local package list cache.
+      # cache_valid_time: 3600 means it will only force an update if the cache is older than 1 hour (3600 seconds).
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Check for packages that can be upgraded (using apt list --upgradable)
+      # We use the raw command module to query the list of upgradable packages.
+      command: /usr/bin/apt list --upgradable
+      register: apt_upgrades
+      # This tells Ansible that even if the command runs successfully, it should only be marked as 'changed'
+      # if there is actual content (more than 2 lines, accounting for the header line).
+      changed_when: apt_upgrades.stdout_lines | length > 2
+
+    - name: Report list of upgradable packages
+      # Display the output, skipping the first line which is the "Listing..." header.
+      debug:
+        msg: "UPGRADES AVAILABLE:\n{{ apt_upgrades.stdout_lines[1:] | join('\n') }}"
+      # This task only runs if upgradable packages were found.
+      when: apt_upgrades.stdout_lines | length > 2
+
+    - name: Report no updates found
+      # Display a clean message if no updates were found.
+      debug:
+        msg: "No system updates are available."
+      # This task only runs if no upgradable packages were found (output length is <= 2 lines).
+      when: apt_upgrades.stdout_lines | length <= 2
