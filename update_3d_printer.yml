@@ -54,11 +54,11 @@
             reboot_timeout: 600 # Wait up to 10 minutes for reboot
           when: reboot_required.stat.exists
 
-      # CRITICAL GUARDRAIL: Only run if the state is NOT in the list of unsafe states
-      when: printer_state not in unsafe_states
+      # CRITICAL GUARDRAIL FIX: Applying | trim here ensures the comparison works against a clean string.
+      when: printer_state | trim not in unsafe_states
 
     - name: Notify if update was skipped due to print or error
       ansible.builtin.debug:
         msg: "Update on {{ inventory_hostname }} was SKIPPED because the state is '{{ printer_state }}'. The print is safe or the status could not be confirmed."
       # This task will run if the block above was skipped (i.e., state is 'printing' or 'unknown')
-      when: printer_state in unsafe_states
+      when: printer_state | trim in unsafe_states
