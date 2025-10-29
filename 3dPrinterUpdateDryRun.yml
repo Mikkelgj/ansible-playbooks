@@ -1,5 +1,5 @@
 - name: Dry Run: Test Safe Update Logic for Klipper Printers
-  hosts: your_3d_printers
+  hosts: all
   vars:
     moonraker_port: 7125 # Default Moonraker API port
 
