@@ -1,6 +1,6 @@
 - name: update_3d_printer  # Changed name as requested
   hosts: all  # Targeting all hosts defined in your inventory
-  become: yes # Required for running system updates and reboot
+  #become: yes # Required for running system updates and reboot
   vars:
     moonraker_port: 7125 # Default Moonraker API port
     # Define states where it is NOT safe to run updates (or status could not be retrieved)
