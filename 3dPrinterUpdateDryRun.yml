@@ -34,7 +34,7 @@
           ansible.builtin.shell: echo "Dry run command executed successfully."
           register: dry_run_result
 
-        - name: DRY RUN Simulating: Reboot the printer host
+        - name: DRY RUN Simulating Reboot the printer host
           ansible.builtin.debug:
             msg: "SUCCESS: The printer is IDLE ({{ printer_state }}). We would now run the 'reboot' command if a reboot was required."
 
