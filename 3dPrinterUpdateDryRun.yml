@@ -25,11 +25,11 @@
     # --- Conditional Block for DRY RUN "Updates" ---
     - block:
         
-        - name: DRY RUN Simulating: Updating package cache and upgrading packages
+        - name: DRY RUN Simulating Updating package cache and upgrading packages
           ansible.builtin.debug:
             msg: "SUCCESS: The printer is IDLE ({{ printer_state }}). We would now run the 'apt update && apt dist-upgrade' command."
 
-        - name: DRY RUN Simulating: Check if a reboot is required
+        - name: DRY RUN Simulating Check if a reboot is required
           # You can replace this with a harmless command to verify execution
           ansible.builtin.shell: echo "Dry run command executed successfully."
           register: dry_run_result
