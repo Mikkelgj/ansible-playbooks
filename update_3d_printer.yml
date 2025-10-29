@@ -1,8 +1,10 @@
-- name: update_3d_printer
+- name: update_3d_printer  # Changed name as requested
   hosts: all  # Targeting all hosts defined in your inventory
   become: yes # Required for running system updates and reboot
   vars:
     moonraker_port: 7125 # Default Moonraker API port
+    # Define states where it is NOT safe to run updates (or status could not be retrieved)
+    unsafe_states: ['printing', 'unknown'] 
 
   tasks:
 
@@ -14,10 +16,24 @@
         status_code: 200
       register: printer_status_check
       delegate_to: localhost # Run the API check from the Ansible controller
+      # CRITICAL FIX: Ignore errors so a connection failure or skip doesn't halt the play
+      ignore_errors: true 
 
     - name: Set fact for printer state
       ansible.builtin.set_fact:
-        printer_state: "{{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] }}"
+        # Check if the result variable is defined AND if the task was not skipped. 
+        # The 'defined' test handles cases where the variable might not exist (like during check mode skips).
+        printer_state: >
+          {% if printer_status_check is defined and not printer_status_check.skipped %}
+            {% if printer_status_check is failed or printer_status_check.status != 200 %}
+              unknown
+            {% else %}
+              {{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] | lower }}
+            {% endif %}
+          {% else %}
+            # If the task was skipped or the variable isn't defined (e.g., check mode), assume 'unknown'
+            unknown
+          {% endif %}
 
     - name: Report current status
       ansible.builtin.debug:
@@ -42,11 +58,11 @@
             reboot_timeout: 600 # Wait up to 10 minutes for reboot
           when: reboot_required.stat.exists
 
-      # THIS IS THE CRITICAL GUARDRAIL: Only run if the state is NOT 'Printing'
-      when: printer_state != 'printing'
+      # CRITICAL GUARDRAIL: Only run if the state is NOT in the list of unsafe states
+      when: printer_state not in unsafe_states
 
-    - name: Notify if update was skipped due to print
+    - name: Notify if update was skipped due to print or error
       ansible.builtin.debug:
-        msg: "Update on {{ inventory_hostname }} was SKIPPED because the state is '{{ printer_state }}'. The print is safe."
-        # This task will only run if the 'block' above was skipped due to the 'when' condition
-      when: printer_state == 'printing'
+        msg: "Update on {{ inventory_hostname }} was SKIPPED because the state is '{{ printer_state }}'. The print is safe or the status could not be confirmed."
+      # This task will run if the block above was skipped (i.e., state is 'printing' or 'unknown')
+      when: printer_state in unsafe_states
