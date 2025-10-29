@@ -1,0 +1,48 @@
+- name: Dry Run: Test Safe Update Logic for Klipper Printers
+  hosts: your_3d_printers
+  vars:
+    moonraker_port: 7125 # Default Moonraker API port
+
+  tasks:
+
+    - name: 🔎 Get Moonraker printer status
+      ansible.builtin.uri:
+        url: "http://{{ inventory_hostname }}:{{ moonraker_port }}/printer/objects/query?idle_timeout"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: printer_status_check
+      delegate_to: localhost # Run the API check from the Ansible controller
+
+    - name: 📝 Set fact for printer state
+      ansible.builtin.set_fact:
+        printer_state: "{{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] }}"
+
+    - name: 📣 Report current status
+      ansible.builtin.debug:
+        msg: "Printer state on {{ inventory_hostname }} is: **{{ printer_state }}**"
+        
+    # --- Conditional Block for DRY RUN "Updates" ---
+    - block:
+        
+        - name: 🟢 [DRY RUN] Simulating: Updating package cache and upgrading packages
+          ansible.builtin.debug:
+            msg: "SUCCESS: The printer is IDLE ({{ printer_state }}). We would now run the 'apt update && apt dist-upgrade' command."
+
+        - name: 🟢 [DRY RUN] Simulating: Check if a reboot is required
+          # You can replace this with a harmless command to verify execution
+          ansible.builtin.shell: echo "Dry run command executed successfully."
+          register: dry_run_result
+
+        - name: 🟢 [DRY RUN] Simulating: Reboot the printer host
+          ansible.builtin.debug:
+            msg: "SUCCESS: The printer is IDLE ({{ printer_state }}). We would now run the 'reboot' command if a reboot was required."
+
+      # THIS IS THE CRITICAL GUARDRAIL
+      when: printer_state != 'Printing'
+
+    - name: ⚠️ Notify if update was skipped
+      ansible.builtin.debug:
+        msg: "Update on **{{ inventory_hostname }}** was **SKIPPED** because the state is '{{ printer_state }}'. The print is safe."
+        # This task will only run if the 'block' above was skipped due to the 'when' condition
+      when: printer_state == 'Printing'
