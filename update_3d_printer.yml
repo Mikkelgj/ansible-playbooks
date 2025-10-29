@@ -1,6 +1,6 @@
 - name: update_3d_printer  # Changed name as requested
   hosts: all  # Targeting all hosts defined in your inventory
-  #become: yes # Required for running system updates and reboot
+  become: yes # Required for running system updates and reboot on REMOTE hosts
   vars:
     moonraker_port: 7125 # Default Moonraker API port
     # Define states where it is NOT safe to run updates (or status could not be retrieved)
@@ -16,6 +16,7 @@
         status_code: 200
       register: printer_status_check
       delegate_to: localhost # Run the API check from the Ansible controller
+      become: no # CRITICAL FIX: Explicitly prevents use of sudo for this local/delegated task
       # CRITICAL FIX: Ignore errors so a connection failure or skip doesn't halt the play
       ignore_errors: true 
 
