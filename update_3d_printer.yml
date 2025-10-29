@@ -22,11 +22,10 @@
 
     - name: Set fact for printer state
       ansible.builtin.set_fact:
-        # Simplified Jinja logic to resolve the 'dict object has no attribute skipped' error.
-        # We now rely only on the 'is success' test and the HTTP status code.
+        # FIX: Added | trim filter to remove any unexpected leading/trailing whitespace
         printer_state: >
           {% if printer_status_check is success and printer_status_check.status == 200 %}
-            {{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] | lower }}
+            {{ (printer_status_check.content | from_json)['result']['status']['idle_timeout']['state'] | lower | trim }}
           {% else %}
             # If the URI task failed, or returned a non-200 status, assume 'unknown' (unsafe).
             unknown
