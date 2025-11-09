@@ -1,18 +1,18 @@
 ---
 - name: Update all packages on Rocky Linux hosts
-  hosts: **rocky_servers**
-  become: **yes**
+  hosts: all
+  become: yes
   tasks:
     - name: Ensure all installed packages are at the latest version
       ansible.builtin.dnf:
-        name: **"*"**
-        state: **latest**
-        update_cache: **yes**
+        name: "*"
+        state: latest
+        update_cache: yes
       register: dnf_result
 
     - name: Report if updates were applied
       ansible.builtin.debug:
         msg: |
-          **System updates applied: {{ dnf_result.changed }}**
-          **Packages updated: {{ dnf_result.results | length }}**
+          System updates applied: {{ dnf_result.changed }}
+          Packages updated: {{ dnf_result.results | length }}
       when: dnf_result.changed
