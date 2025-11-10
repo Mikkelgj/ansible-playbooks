@@ -1,6 +1,6 @@
 ---
 - name: Test Ansible connectivity to Windows
-  hosts: windows
+  hosts: all
   gather_facts: no
 
   tasks:
