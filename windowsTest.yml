@@ -1,0 +1,20 @@
+---
+- name: Test Ansible connectivity to Windows
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Ping the Windows host
+      win_ping:
+
+    - name: Run a simple PowerShell command
+      win_command: echo "Hello from Ansible on Windows!"
+
+    - name: Get system information
+      win_shell: |
+        Get-ComputerInfo | Select-Object -Property OSName, OSVersion, CsName
+      register: sysinfo
+
+    - name: Display system info
+      debug:
+        var: sysinfo.stdout_lines
